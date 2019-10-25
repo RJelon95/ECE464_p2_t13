@@ -63,5 +63,15 @@ def TV_E(N, seed):
         while len(TV_E_multiSeed[i]) != N:
             TV_E_multiSeed[i] = TV_E_multiSeed[i][1:]
     
+    #write to txt file
+    outputFile  = open("TV_E.txt", "w") 
+    outStr = ""
+    for i in range(255):
+        outStr = TV_E_multiSeed[i]
+        outputFile.write(outStr + "\n")
+
+    outputFile.close()
+
 
     return TV_E_multiSeed   
+
