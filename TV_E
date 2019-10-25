@@ -4,7 +4,7 @@
 #seed: initial seed for LFSR
 #batch_low/high: range of test vectors to return
 
-def TV_E(N, seed, batch_low, batch_high):
+def TV_E(N, seed):
     state_prev = []
     state = [] #store N states here, temporarily
     TV_E = []   #store final TV sequence here, permanently
@@ -17,29 +17,24 @@ def TV_E(N, seed, batch_low, batch_high):
     while (len(s0) < 8):
         s0 = ''.join(('0',s0))   #append with zeros if necessary to get to 8 bits
 
-    #populate initial seed
+    #populate initial seed in state machine
     for i in range(8):
         state_prev.append(int(s0[i]))
         state.append(int(s0[i]))
-
-    #concatenate TV to reach N inputs:
-    while len(s0) < N:
-        s0 = s0+s0
-    while len(s0) != N:
-        s0 = s0[1:]
-
-    #append to TV_E master list
     TV_E.append(s0)
 
-    #perform LFSR for remaining 254 vectors
-    for i in range(254):
+
+
+    #perform LFSR for test vectors with multi-seed behavior
+
+    for i in range(2*255):    #do for range 2*255 circuit inputs so we don't run out of space
         stateStr = ""
         for j in range(8):
             if j == 0:
                 state[j] = state_prev[7]
             #XOR operation between two last D-FF
             if j == 6:
-                state[j] = str(int(state_prev[j])^int(state_prev[j+1]))
+                state[j] = str(int(state_prev[j-1])^int(state_prev[j+1]))
             else:
                 state[j] = state_prev[j-1]
 
@@ -48,10 +43,25 @@ def TV_E(N, seed, batch_low, batch_high):
         TV_E.append(stateStr)
 
 
-    TV_E_batch = []
 
-    for i in range (batch_low-1, batch_high):
-        TV_E_batch.append(TV_E[i])
+    
+    #now, concatentate TV_E with its subsequent results to get the multi-seed behavior:
+    TV_E_multiSeed = [] #store here
+    idx = 0 #keeping track of which seed to shift over
+    seedStr = ""
 
+    for i in range (256):
+        for j in range (i+1, int(N/8) + 1 + idx):
+            seedStr = ''.join((TV_E[j],TV_E[i]))
+        TV_E_multiSeed.append(seedStr)
+        idx += 1
+        seedStr = ""
 
-    return TV_E_batch
+       
+    #chop TV to reach N inputs:
+    for x in range(255):
+        while len(TV_E_multiSeed[i]) != N:
+            TV_E_multiSeed[i] = TV_E_multiSeed[i][1:]
+    
+
+    return TV_E_multiSeed   
