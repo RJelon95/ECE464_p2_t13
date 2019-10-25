@@ -1,0 +1,28 @@
+#set image extension
+set term pdf
+#set save directory
+set output "plot.pdf"
+#labels
+set title "Fault Coverage of the Test Vectors" font "20"
+set xlabel 'Batch'
+set ylabel 'Fault Coverage [%]'
+
+set xrange [0:25]
+set yrange [0:100]
+
+set key outside
+
+#setting up lines style
+
+set linetype 1 linewidth 0.800 linecolor rgb "black" 
+set linetype 2 linecolor rgb "red" linewidth 0.800
+set linetype 3 linecolor rgb "red" linewidth 0.800 dashtype 5
+set linetype 4 linecolor rgb "blue" linewidth 0.800
+set linetype 5 linecolor rgb "blue" linewidth 0.800 dashtype 5
+
+
+
+#plotting fault list percentage
+plot for [col=1:5] 'f_cvg.csv' using 0:col with lines title columnheader 
+
+
