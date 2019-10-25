@@ -1,6 +1,9 @@
 #LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
 
-#returns: list of 2^N test vectors of length N
+#N: number of inputs to the circuit
+#seed: initial seed for LFSR
+#batch_low/high: range of test vectors to return
+
 def TV_E(N, seed, batch_low, batch_high):
     state_prev = []
     state = [] #store N states here, temporarily
@@ -11,37 +14,44 @@ def TV_E(N, seed, batch_low, batch_high):
     s0 = bin(seed)
     s0 = s0.replace("0b", "")   #remove "b0"
 
-    while (len(s0) < N):
-        s0 = ''.join(('0',s0))   #append with zeros if necessary
+    while (len(s0) < 8):
+        s0 = ''.join(('0',s0))   #append with zeros if necessary to get to 8 bits
 
-    #populate initial seed:1
-
-    for i in range(N):
+    #populate initial seed
+    for i in range(8):
         state_prev.append(int(s0[i]))
         state.append(int(s0[i]))
 
+    #concatenate TV to reach N inputs:
+    while len(s0) < N:
+        s0 = s0+s0
+    while len(s0) != N:
+        s0 = s0[1:]
+
+    #append to TV_E master list
     TV_E.append(s0)
 
-    #perform LFSR 2
-    for i in range(pow(2,N) - seed):
-        TV_E.append("")
-        
-        for j in range(N):
+    #perform LFSR for remaining 254 vectors
+    for i in range(254):
+        stateStr = ""
+        for j in range(8):
             if j == 0:
-                state[j] = state_prev[N-1]
-
+                state[j] = state_prev[7]
             #XOR operation between two last D-FF
-            if j == N -2:
-                state[j] = str(int(state_prev[N-3])^int(state_prev[N-1]))
+            if j == 6:
+                state[j] = str(int(state_prev[j])^int(state_prev[j+1]))
             else:
                 state[j] = state_prev[j-1]
-            TV_E[i+1] += str(state[j])
+
+            stateStr += str(state[j])
         state_prev = state.copy()
+        TV_E.append(stateStr)
+
 
     TV_E_batch = []
 
     for i in range (batch_low-1, batch_high):
         TV_E_batch.append(TV_E[i])
 
-    print("finished!")  #debugging purposes
+
     return TV_E_batch
