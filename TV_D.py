@@ -1,7 +1,8 @@
 #LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
-
-#returns: list of 2^N test vectors of length N
-def TV_D(N, seed, batch_low, batch_high):
+#returns: list of 255 test vectors of length N
+#N: inputs to circuit
+# seed: inital seed for the LFSR 
+def TV_D(N, seed):
     state_prev = []
     state = [] #store N states here, temporarily
     TV_D = []   #store final TV sequence here, permanently
@@ -45,14 +46,14 @@ def TV_D(N, seed, batch_low, batch_high):
             TV=TV[1:]
         TV_D.append(TV)
         TV = ""
+
+    #write to txt file
+    outputFile  = open("TV_D.txt", "w") 
+    outStr = ""
+    for i in range(255):
+        outStr = TV_D[i]
+        outputFile.write(outStr + "\n")
+
+    outputFile.close()
          
-    #cut to user batch size
-    TV_D_batchCut = []
-
-    for i in range(batch_low-1,batch_high):
-        TV_D_batchCut.append(TV_D[i])
-
-
-
-
-    return TV_D_batchCut
+    return TV_D
