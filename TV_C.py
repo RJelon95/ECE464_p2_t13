@@ -1,5 +1,5 @@
-def TV_C(N, seed, f):
-    outputFile  = open("TV_A.txt", "w") 
+def TV_C(N, seed):
+    outputFile  = open("TV_C.txt", "w") 
     TV_C = []
     x = 0
 

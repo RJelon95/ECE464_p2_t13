@@ -14,3 +14,4 @@ def TV_B(N, seed):
     outputFile.close()
     return TV_B
 
+
