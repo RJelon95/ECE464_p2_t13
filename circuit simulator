@@ -3,8 +3,10 @@ import os
 import copy
 import math
 
+inputCount = 0  #global input line counter
 
 # Function List:
+# TV_E: Generates TV_E to .txt file, "TV_E.txt"
 # 1. netRead: read the benchmark file and build circuit dictionary
 # 2. gateCalc: function that will work on the logic of each gate and returns the output
 # 3. inputRead: function that will update the circuit dictionary made in netRead filling in the inputs wires
@@ -12,13 +14,96 @@ import math
 # 5. fault_det: fault simulator: returns the circuit dictionary with all the lines updated considering the fault
 # 6. main: The main function
 
+# -------------------------------------------------------------------------------------------------------------------- #
+# FUNCTION: Generates TV_E to .txt file, "TV_E.txt"
+# returns list of 255 TV_E vectors
 
+#LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
+
+#N: number of inputs to the circuit
+#seed: initial seed for LFSR
+#batch_low/high: range of test vectors to return
+
+def TV_E(N, seed):
+    state_prev = []
+    state = [] #store N states here, temporarily
+    TV_E = []   #store final TV sequence here, permanently
+    seed = int(seed)   #cast input to int
+    #construct LFSR:
+
+    s0 = bin(seed)
+    s0 = s0.replace("0b", "")   #remove "b0"
+
+    while (len(s0) < 8):
+        s0 = ''.join(('0',s0))   #append with zeros if necessary to get to 8 bits
+
+    #populate initial seed in state machine
+    for i in range(8):
+        state_prev.append(int(s0[i]))
+        state.append(int(s0[i]))
+    TV_E.append(s0)
+
+
+
+    #perform LFSR for test vectors with multi-seed behavior
+
+    for i in range(2*255):    #do for range 2*255 circuit inputs so we don't run out of space
+        stateStr = ""
+        for j in range(8):
+            if j == 0:
+                state[j] = state_prev[7]
+            #XOR operation between two last D-FF
+            if j == 6:
+                state[j] = str(int(state_prev[j-1])^int(state_prev[j+1]))
+            else:
+                state[j] = state_prev[j-1]
+
+            stateStr += str(state[j])
+        state_prev = state.copy()
+        TV_E.append(stateStr)
+
+
+
+    
+    #now, concatentate TV_E with its subsequent results to get the multi-seed behavior:
+    TV_E_multiSeed = [] #store here
+    idx = 0 #keeping track of which seed to shift over
+    seedStr = ""
+
+    for i in range (255):
+        TV_E_multiSeed.append(str(TV_E[i]))
+        seedStr = str(TV_E_multiSeed[i])
+        while len(TV_E_multiSeed[i]) < N:
+            seedStr = ''.join((TV_E[i+1],TV_E[i]))
+            
+        TV_E_multiSeed[i] = seedStr
+        seedStr = ""
+
+       
+    #chop TV to reach N inputs:
+    for i in range(255):
+        while len(TV_E_multiSeed[i]) != N:
+            TV_E_multiSeed[i] = TV_E_multiSeed[i][1:]
+    
+    #write to txt file
+    outputFile  = open("TV_E.txt", "w") 
+    outStr = ""
+    for i in range(255):
+        outStr = TV_E_multiSeed[i]
+        outputFile.write(outStr + "\n")
+
+    outputFile.close()
+
+
+    return TV_E_multiSeed  
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: Reading in the Circuit gate-level netlist file: this function takes as input the benchmark file and returns as output
 #           the circuit dictionary that will be using throughout the code
 
 def netRead(netName):
+    global inputCount #reference global counter
+    
     # Opening the netlist file:
     netFile = open(netName, "r")
 
@@ -58,6 +143,7 @@ def netRead(netName):
             line = line.replace("INPUT", "")
             line = line.replace("(", "")
             line = line.replace(")", "")
+            inputCount += 1 #global input line counter
 
             # Format the variable name to wire_*VAR_NAME*
             line = "wire_" + line
@@ -454,7 +540,8 @@ def main():
             break
 
     # Select test vector file, press Enter to use the test vectors in ETV_set3
-    while True:
+    #commented out: user input of test vector files; will be covered 
+    '''while True:
         inputName = "AutoInFile"
         print("\n Read test vector input file. Press enter to use ETV_set3 or enter your file name:")
         userInput = input()
@@ -466,7 +553,8 @@ def main():
                 print("File does not exist. \n")
             else:
                 break
-
+    '''
+    
     # Select the output file
     while True:
         print("\n Write output file:")
@@ -480,34 +568,20 @@ def main():
     # Generate the circuit dictionary
     circuit = netRead(cktFile)
 
-    # If the user chose to use the test vectors in ETV_set3, generate them in a file
-    if inputName == "AutoInFile":
-
-        inputFile = open(inputName, "w")
-        n_input=circuit["INPUT_WIDTH"][1]
-        i = math.ceil(n_input/2)
-        in1="00"*i
-        in2="11"*i
-        in3="01"*i
-        in4="10"*i
-        if n_input % 2 == 1:
-             in1=in1[:-1]
-             in2=in2[:-1]
-             in3=in3[:-1]
-             in4=in4[:-1]
-        inputFile.write(in1)
-        inputFile.write("\n{0}".format(in2))
-        inputFile.write("\n{0}".format(in3))
-        inputFile.write("\n{0}".format(in4))
-        inputFile.close()
-
-
-    tvFile = open(inputName, "r")
+    print("Please enter a seed: ")
+    seed = input()
+    
+    print("Please enter a batch size in [1,10]: ")
+    batch = input()
+    
+    TV_E(inputCount, seed)
+    
+    tvFile = open("TV_E.txt", "r")
     outFile = open(outputName, "w")
 
     outFile.write("\n# fault sim result")
     outFile.write("\n# input: " + cktFile)
-    outFile.write("\n# input: " + inputName)
+    outFile.write("\n# input: " + "TV_E.txt")
     outFile.write("\n# input: " + fltFile)
 
     # temporary empty list of detected and undetected faults
@@ -531,7 +605,7 @@ def main():
         # Since the inputRead takes the inputs in the opposite order, we reverse it before giving it to the inputRead
         tv_rev = tv[::-1]
 
-        print("\n-----> READING TEST VECTOR " + tv)
+        #print("\n-----> READING TEST VECTOR " + tv)
 
         # at each new test vector, reset the circuit
         circuit = inputRead(circuit, tv_rev)
@@ -543,7 +617,7 @@ def main():
         # Saving the outputs resulting from the good circuit
         good_out=list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
 
-        print("\ntv = {0} -> {1} (good)".format(tv, ''.join(good_out)))
+        #print("\ntv = {0} -> {1} (good)".format(tv, ''.join(good_out)))
         outFile.write("\n\ntv = {0} -> {1} (good)".format(tv, ''.join(good_out)))
 
         # Check the validity of the test vectors format
@@ -588,8 +662,8 @@ def main():
 
             # Compare good and bad outputs: if they are different -> show detection ad append fault to detected list
             if good_out!= bad_out:
-                    print("detect:")
-                    print("{0}: {1} -> {2}".format(fault, tv, ''.join(bad_out)))
+                    #print("detect:")
+                    #print("{0}: {1} -> {2}".format(fault, tv, ''.join(bad_out)))
                     outFile.write("\ndetected:")
                     outFile.write("\n{0}: {1} -> {2}".format(fault, tv,''.join(bad_out)))
                     if not ( fault  in detect_list ):
@@ -603,6 +677,9 @@ def main():
     num_det=len(detect_list)
     num_undet=len(undetect_list)
     num_tot=len(fault_list)
+    
+    #commented out print statements
+    '''
     print("\nfault list:")
     print(fault_list)
     print("detect list:")
@@ -613,7 +690,7 @@ def main():
     print("UNDETECTED FAULTS: {0}".format(num_undet))
     print(undetect_list)
     print("\nfault coverage: {0}/{1} = {2}%".format(num_det,num_tot,num_det/num_tot*100))
-
+    '''
 
     outFile.write("\n\n\ntotal detected faults: {0}".format(num_det))
     outFile.write("\n\nundetected faults: {0}\n".format(num_undet))
