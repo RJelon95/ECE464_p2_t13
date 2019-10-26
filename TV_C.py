@@ -1,5 +1,5 @@
 def TV_C(N, seed, f):
-    f = open(f, "a")
+    outputFile  = open("TV_A.txt", "w") 
     TV_C = []
     x = 0
 
@@ -13,6 +13,7 @@ def TV_C(N, seed, f):
             bits = s0 + bits
         cutoff = len(bits) - N
         TV_C.insert(i, bits[cutoff:len(bits)])
-        f.write(TV_C[x] + '\n')
+        outputFile.write(TV_C[x] + '\n')
         x = x + 1
-    f.close()
+    outputFile.close()
+    return TV_C

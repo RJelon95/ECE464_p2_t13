@@ -1,5 +1,5 @@
-def TV_B(N, seed, f):
-    f = open(f, "a")
+def TV_B(N, seed):
+    outputFile  = open("TV_B.txt", "w") 
     TV_B = []
     s0 = bin(int(seed))
 
@@ -10,6 +10,7 @@ def TV_B(N, seed, f):
         cutoff = abs(len(bits) - N)
         TV_B.insert(i,bits[cutoff:])
         s0 = bin(int(s0,2) + 1)
-        f.write(TV_B[i] + '\n')
-    f.close()
+        outputFile.write(TV_B[i] + '\n')
+    outputFile.close()
+    return TV_B
 
