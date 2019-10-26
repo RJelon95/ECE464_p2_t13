@@ -1,12 +1,12 @@
 def TV_C(N, seed):
     TV_C = []
-    s0 = bin(int(seed))
-
     for i in range(0, 255):
         bits = ''
         for j in range(0, -(-N//8)):
-            bits = s0[2:].rjust(8, '0') + bits
-            s0 = bin(int(s0,2) + 1)
-        cutoff = abs(len(bits) - N)
-        TV_C.insert(i,bits[cutoff:])
+            s0 = bin(int(seed) + i)
+            i = i + 1
+            s0 = s0[2:].rjust(8, '0')
+            bits = s0 + bits
+        cutoff = len(bits) - N
+        TV_C.insert(i, bits[cutoff:len(bits)])
     return TV_C
