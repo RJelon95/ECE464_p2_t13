@@ -6,157 +6,13 @@ import math
 inputCount = 0  #global input line counter
 
 # Function List:
-# TV_A: Generates TV_A to .txt file, "TV_A.txt"
-# TV_B: Generates TV_B to .txt file, "TV_B.txt"
-# TV_C: Generates TV_C to .txt file, "TV_C.txt"
-# TV_D: Generates TV_D to .txt file, "TV_D.txt"
 # TV_E: Generates TV_E to .txt file, "TV_E.txt"
-
 # 1. netRead: read the benchmark file and build circuit dictionary
 # 2. gateCalc: function that will work on the logic of each gate and returns the output
 # 3. inputRead: function that will update the circuit dictionary made in netRead filling in the inputs wires
 # 4. basic_sim: simulator: returns the circuit dictionary with all the lines updated considering the good circuit
 # 5. fault_det: fault simulator: returns the circuit dictionary with all the lines updated considering the fault
 # 6. main: The main function
-
-# -------------------------------------------------------------------------------------------------------------------- #
-# FUNCTION: Generates TV_A to .txt file, "TV_A.txt"
-# returns list of 255 TV_A vectors
-def TV_A(N, seed):
-    TV_A = []   #store TV to list
-        
-    for i in range(seed, 255): 
-        TV = bin(i)     #convert int to binary string
-        TV = TV.replace("0b", "")   #eliminate "0b"
-        
-        while (len(TV) < N):
-            TV = ''.join(('0',TV))   #pad zeros to get length 
-        
-        TV_A.append(TV)
-    
-    if seed != 0:
-        for i in range(seed):
-            TV = bin(i)     #convert int to binary string
-            TV = TV.replace("0b", "")   #eliminate "0b"
-        
-            while (len(TV) < N):
-                TV = ''.join(('0',TV))   #pad zeros to get length 
-        
-            TV_A.append(TV)
-    
-    #write to txt file
-    outputFile  = open("TV_A.txt", "w") 
-    outStr = ""
-
-    for i in range(255):
-        outStr = TV_A[i][0:N]   #cut off N bits to ensure proper size
-        outputFile.write(outStr + "\n")
-    outputFile.close()
-    return TV_A
-
-# -------------------------------------------------------------------------------------------------------------------- #
-# FUNCTION: Generates TV_B to .txt file, "TV_B.txt"
-# returns list of 255 TV_B vectors
-def TV_B(N, seed):
-    outputFile  = open("TV_B.txt", "w") 
-    TV_B = []
-    s0 = bin(int(seed))
-
-    for i in range(0, 255):
-        bits = ''
-        for j in range(0, -(-N//8)):
-            bits = s0[2:].rjust(8, '0') + bits
-        cutoff = abs(len(bits) - N)
-        TV_B.insert(i,bits[cutoff:])
-        s0 = bin(int(s0,2) + 1)
-        outputFile.write(TV_B[i] + '\n')
-    outputFile.close()
-    return TV_B
-
-# -------------------------------------------------------------------------------------------------------------------- #
-# FUNCTION: Generates TV_C to .txt file, "TV_C.txt"
-# returns list of 255 TV_C vectors
-def TV_C(N, seed):
-    outputFile  = open("TV_C.txt", "w") 
-    TV_C = []
-    x = 0
-
-    for i in range(0, 255):
-        bits = ''
-        for j in range(0, -(-N//8)):
-            s0 = bin(int(seed) + i)
-            i = i + 1
-            s0 = s0[2:].rjust(8, '0')
-            bits = s0 + bits
-        cutoff = len(bits) - N
-        TV_C.insert(i, bits[cutoff:len(bits)])
-        outputFile.write(TV_C[x] + '\n')
-        x = x + 1
-    outputFile.close()
-    return TV_C
-
-# -------------------------------------------------------------------------------------------------------------------- #
-# FUNCTION: Generates TV_D to .txt file, "TV_D.txt"
-# returns list of 255 TV_D vectors
-#LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
-#returns: list of 255 test vectors of length N
-#N: inputs to circuit
-# seed: inital seed for the LFSR 
-def TV_D(N, seed):
-    state_prev = []
-    state = [] #store N states here, temporarily
-    TV_D = []   #store final TV sequence here, permanently
-
-    #construct LFSR:
-
-    s0 = bin(seed)
-    s0 = s0.replace("0b", "")   #remove "b0"
-    
-    while (len(s0) < 8):
-        s0 = ''.join(('0',s0))   #prepend with zeros to get to 8 bit length
-
-    for i in range (8):
-        state_prev.append(s0[i])    #get initial seed value
-
-    state = state_prev.copy()
-    TV = ""
-
-    while len(s0) < N:
-            s0 = ''.join((s0,s0))
-    while len(s0) != N:
-        s0=s0[1:]
-    TV_D.append(s0)
-
-    #LFSR with XOR between two last D-FF
-    for i in range (254):
-        for j in range(8):
-            if j == 0:
-               
-                state[j] = state_prev[7]
-            if j == 6:
-                state[j] = str(int(state_prev[j+1])^int(state_prev[j-1]))
-            else:
-                state[j] = state_prev[j-1]
-            TV+=str(state[j])
-        state_prev = state.copy()
-
-        while len(TV) < N:
-            TV = ''.join((TV,TV))
-        while len(TV) != N:
-            TV=TV[1:]
-        TV_D.append(TV)
-        TV = ""
-
-    #write to txt file
-    outputFile  = open("TV_D.txt", "w") 
-    outStr = ""
-    for i in range(255):
-        outStr = TV_D[i]
-        outputFile.write(outStr + "\n")
-
-    outputFile.close()
-         
-    return TV_D
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: Generates TV_E to .txt file, "TV_E.txt"
@@ -187,6 +43,8 @@ def TV_E(N, seed):
         state.append(int(s0[i]))
     TV_E.append(s0)
 
+
+
     #perform LFSR for test vectors with multi-seed behavior
 
     for i in range(2*255):    #do for range 2*255 circuit inputs so we don't run out of space
@@ -203,6 +61,9 @@ def TV_E(N, seed):
             stateStr += str(state[j])
         state_prev = state.copy()
         TV_E.append(stateStr)
+
+
+
     
     #now, concatentate TV_E with its subsequent results to get the multi-seed behavior:
     TV_E_multiSeed = [] #store here
@@ -218,6 +79,7 @@ def TV_E(N, seed):
         TV_E_multiSeed[i] = seedStr
         seedStr = ""
 
+       
     #chop TV to reach N inputs:
     for i in range(255):
         while len(TV_E_multiSeed[i]) != N:
@@ -231,6 +93,8 @@ def TV_E(N, seed):
         outputFile.write(outStr + "\n")
 
     outputFile.close()
+
+
     return TV_E_multiSeed  
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -521,8 +385,8 @@ def inputRead(circuit, line):
         circuit[inputs[i]][2] = True  # and make it so that this line is accessed
 
         # In case the input has an invalid character (i.e. not "0", "1" or "U"), return an error flag
-        if bitVal != "0" and bitVal != "1" and bitVal != "U":
-            return -2
+    #    if bitVal != "0" and bitVal != "1" and bitVal != "U":
+    #        return -2
         i -= 1 # continuing the increments
 
     return circuit
