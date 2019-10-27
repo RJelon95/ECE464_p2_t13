@@ -69,14 +69,15 @@ def TV_E(N, seed):
     TV_E_multiSeed = [] #store here
     idx = 0 #keeping track of which seed to shift over
     seedStr = ""
-
+    joinIdx = 1
     for i in range (255):
         TV_E_multiSeed.append(str(TV_E[i]))
         seedStr = str(TV_E_multiSeed[i])
         while len(TV_E_multiSeed[i]) < N:
-            seedStr = ''.join((TV_E[i+1],TV_E[i]))
+            TV_E_multiSeed[i] = TV_E[joinIdx+1] + TV_E_multiSeed[i]
+            joinIdx+=1
+        joinIdx = 1
             
-        TV_E_multiSeed[i] = seedStr
         seedStr = ""
 
        
