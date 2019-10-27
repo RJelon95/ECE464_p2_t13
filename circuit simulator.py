@@ -96,6 +96,133 @@ def TV_E(N, seed):
 
 
     return TV_E_multiSeed  
+def TV_C(N, seed):
+    outputFile  = open("TV_C.txt", "w") 
+    TV_C = []
+    x = 0
+
+    for i in range(0, 255):
+        bits = ''
+        for j in range(0, -(-N//8)):
+            s0 = bin(int(seed) + i)
+            i = i + 1
+            s0 = s0[2:].rjust(8, '0')
+            bits = s0 + bits
+        cutoff = len(bits) - N
+        TV_C.insert(i, bits[cutoff:len(bits)])
+        outputFile.write(TV_C[x] + '\n')
+        x = x + 1
+    outputFile.close()
+    return TV_C
+#LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
+#returns: list of 255 test vectors of length N
+#N: inputs to circuit
+# seed: inital seed for the LFSR 
+def TV_D(N, seed):
+    state_prev = []
+    state = [] #store N states here, temporarily
+    TV_D = []   #store final TV sequence here, permanently
+
+    #construct LFSR:
+
+    s0 = bin(seed)
+    s0 = s0.replace("0b", "")   #remove "b0"
+    
+    while (len(s0) < 8):
+        s0 = ''.join(('0',s0))   #prepend with zeros to get to 8 bit length
+
+    for i in range (8):
+        state_prev.append(s0[i])    #get initial seed value
+
+    state = state_prev.copy()
+    TV = ""
+
+    while len(s0) < N:
+            s0 = ''.join((s0,s0))
+    while len(s0) != N:
+        s0=s0[1:]
+    TV_D.append(s0)
+
+    #LFSR with XOR between two last D-FF
+    for i in range (254):
+        for j in range(8):
+            if j == 0:
+               
+                state[j] = state_prev[7]
+            if j == 6:
+                state[j] = str(int(state_prev[j+1])^int(state_prev[j-1]))
+            else:
+                state[j] = state_prev[j-1]
+            TV+=str(state[j])
+        state_prev = state.copy()
+
+        while len(TV) < N:
+            TV = ''.join((TV,TV))
+        while len(TV) != N:
+            TV=TV[1:]
+        TV_D.append(TV)
+        TV = ""
+
+    #write to txt file
+    outputFile  = open("TV_D.txt", "w") 
+    outStr = ""
+    for i in range(255):
+        outStr = TV_D[i]
+        outputFile.write(outStr + "\n")
+
+    outputFile.close()
+         
+    return TV_D
+def TV_A(N, seed):
+    TV_A = []   #store TV to list
+
+        
+    for i in range(seed, 255): 
+        TV = bin(i)     #convert int to binary string
+        TV = TV.replace("0b", "")   #eliminate "0b"
+        
+        while (len(TV) < N):
+            TV = ''.join(('0',TV))   #pad zeros to get length 
+        
+        TV_A.append(TV)
+    
+    if seed != 0:
+        for i in range(seed):
+            TV = bin(i)     #convert int to binary string
+            TV = TV.replace("0b", "")   #eliminate "0b"
+        
+            while (len(TV) < N):
+                TV = ''.join(('0',TV))   #pad zeros to get length 
+        
+            TV_A.append(TV)
+    
+    #write to txt file
+    outputFile  = open("TV_A.txt", "w") 
+    outStr = ""
+
+    for i in range(255):
+        outStr = TV_A[i][0:N]   #cut off N bits to ensure proper size
+        outputFile.write(outStr + "\n")
+
+    outputFile.close()
+
+
+    return TV_A
+def TV_B(N, seed):
+    outputFile  = open("TV_B.txt", "w") 
+    TV_B = []
+    s0 = bin(int(seed))
+
+    for i in range(0, 255):
+        bits = ''
+        for j in range(0, -(-N//8)):
+            bits = s0[2:].rjust(8, '0') + bits
+        cutoff = abs(len(bits) - N)
+        TV_B.insert(i,bits[cutoff:])
+        s0 = bin(int(s0,2) + 1)
+        outputFile.write(TV_B[i] + '\n')
+    outputFile.close()
+    return TV_B
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: Reading in the Circuit gate-level netlist file: this function takes as input the benchmark file and returns as output
@@ -534,7 +661,7 @@ def main():
     while True:
         print("\n Read fault list file:")
         # userInput = input()
-        userInput = "fault.txt"
+        userInput = "f_list.txt"
         fltFile = os.path.join(script_dir, userInput)
         if not os.path.isfile(fltFile):
             print("File does not exist. \n")
@@ -606,27 +733,12 @@ def main():
         detect_list = []
         undetect_list = []
 
-        # read each test vector at a time
-        # for tv in tvFile:
 
-        #     # Do nothing else if empty lines ...
-        #     if (tv == "\n"):
-        #         continue
-        #     # ... or any comments
-        #     if (tv[0] == "#"):
-        #         continue
         for x in range(25):
+            
             for x in range(x*batch, batch + batch*x):
 
-                # Removing newlines and spaces
-                # tv = tv.replace("\n", "")
-                # tv = tv.replace(" ", "")
-
-                # Since the inputRead takes the inputs in the opposite order, we reverse it before giving it to the inputRead
-                # tv_rev = tv[::-1]
                 tv_rev = str(tvlst[x])
-
-                #print("\n-----> READING TEST VECTOR " + tv)
 
                 # at each new test vector, reset the circuit
                 circuit = inputRead(circuit, tv_rev)
@@ -637,21 +749,6 @@ def main():
 
                 # Saving the outputs resulting from the good circuit
                 good_out=list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
-
-                #print("\ntv = {0} -> {1} (good)".format(tv, ''.join(good_out)))
-                # outFile.write("\n\ntv = {0} -> {1} (good)".format(tv, ''.join(good_out)))
-
-                # # Check the validity of the test vectors format
-                # if circuit == -1:
-                #     print("INPUT ERROR: INSUFFICIENT BITS")
-                #     outFile.write(" -> INPUT ERROR: INSUFFICIENT BITS" + "\n")
-                #     print("...move on to next input\n")
-                #     continue
-                # elif circuit == -2:
-                #     print("INPUT ERROR: INVALID INPUT VALUE/S")
-                #     outFile.write(" -> INPUT ERROR: INVALID INPUT VALUE/S" + "\n")
-                #     print("...move on to next input\n")
-                #     continue
 
                 faultFile = open(fltFile, "r")
 
@@ -695,34 +792,12 @@ def main():
                     if not(term in detect_list):
                         undetect_list.append(term)
             
-            TV_detectPercent.append(len(detect_list)/len(fault_list)*100)
+                TV_detectPercent.append(len(detect_list)/len(fault_list)*100)
 
             #clear list for next loop
             detect_list.clear()
             fault_list.clear()
             undetect_list.clear()
-        # num_det=len(detect_list)
-        # num_undet=len(undetect_list)
-        # num_tot=len(fault_list)
-        
-        #commented out print statements
-        '''
-        print("\nfault list:")
-        print(fault_list)
-        print("detect list:")
-        print(detect_list)
-        print("undetect list:")
-        print(undetect_list)
-        print("\nTOTAL DETECTED FAULTS: {0}".format(num_det))
-        print("UNDETECTED FAULTS: {0}".format(num_undet))
-        print(undetect_list)
-        print("\nfault coverage: {0}/{1} = {2}%".format(num_det,num_tot,num_det/num_tot*100))
-        '''
-
-        # outFile.write("\n\n\ntotal detected faults: {0}".format(num_det))
-        # outFile.write("\n\nundetected faults: {0}\n".format(num_undet))
-        # outFile.write("\n".join(undetect_list))
-        # outFile.write("\n\nfault coverage: {0}/{1} = {2}%".format(num_det,num_tot,num_det/num_tot*100))
     print("Finished")
     print(TV_detectPercent)
 
