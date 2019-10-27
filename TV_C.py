@@ -3,7 +3,6 @@ def TV_C(N, seed):
     TV_C = []
     x = 0
 
-
     for i in range(0, 255):
         bits = ''
         for j in range(0, -(-N//8)):
