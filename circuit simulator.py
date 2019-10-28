@@ -531,7 +531,7 @@ def basic_sim(circuit):
 
         # Remove the first element of the queue and assign it to a variable for us to use
         curr = queue[0]
-        queue.remove(curr)
+        #queue.remove(curr)
 
         # initialize a flag, used to check if every terminal has been accessed
         term_has_value = True
@@ -763,7 +763,7 @@ def main():
 
         # save a copy of the circuit with updated inputs and call the good circuit simulator to get the good circuit
         good_circuit=copy.deepcopy(circuit)
-        good_circuit = basic_sim(good_circuit)
+        #good_circuit = basic_sim(good_circuit)
 
         # Saving the outputs resulting from the good circuit
         good_out=list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
@@ -782,7 +782,6 @@ def main():
             if good_out!= bad_out:
                 if not ( fault  in detect_list ):
                     detect_list.append(fault)
-                    fault_list.remove(term) #remove the detected fault from the list - we want to save time in our next loop
                     detect +=1  #increment detection counter
 
             if not(term in detect_list):
