@@ -789,7 +789,7 @@ def main():
             
         #at this point we have looped through the fault list; save the batch calculations
         detectRate = detect/totalFaults*100
-        detect = 0
+        
         A_detectionRate.append(detectRate + A_detectionRate[-1])
 
         #reached end of the loop, go back up to finish for all 25 test vectors in this method
