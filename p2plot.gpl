@@ -26,4 +26,4 @@ set linetype 5 linecolor rgb "blue" linewidth 0.800 dashtype 5
 
 #plotting fault list percentage
 
-plot for [col=1:5] 'test.csv' using 0:col with lines title columnheader
+plot for [col=1:5] 'output.csv' using 0:col with lines title columnheader
