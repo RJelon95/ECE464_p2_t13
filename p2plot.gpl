@@ -4,7 +4,7 @@ set term pdf
 set output "plot.pdf"
 #labels
 set title "Fault Coverage of the Test Vectors" font "20"
-set xlabel 'Batch number'
+set xlabel 'Test vector'
 set ylabel 'Fault Coverage [%]'
 #data separator for commas
 set datafile separator ","
