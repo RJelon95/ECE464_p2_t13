@@ -73,6 +73,4 @@ def TV_E(N, seed):
         outputFile.write(outStr + "\n")
 
     outputFile.close()
-
-
     return TV_E_multiSeed  

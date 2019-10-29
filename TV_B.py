@@ -13,5 +13,3 @@ def TV_B(N, seed):
         outputFile.write(TV_B[i] + '\n')
     outputFile.close()
     return TV_B
-
-

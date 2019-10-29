@@ -685,7 +685,7 @@ def main():
     circuit = netRead(cktFile)
 
     print("Please enter a seed: ")
-    seed = 3
+    seed = 255
     seed = int(seed)
     
     print("Please enter a batch size in [1,10]: ")
