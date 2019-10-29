@@ -1,9 +1,10 @@
 from __future__ import print_function
-import os
-import copy
-import math
 
-inputCount = 0  #global input line counter
+import copy
+import os
+
+inputCount = 0  # global input line counter
+
 
 # Function List:
 # TV_E: Generates TV_E to .txt file, "TV_E.txt"
@@ -18,76 +19,70 @@ inputCount = 0  #global input line counter
 # FUNCTION: Generates TV_E to .txt file, "TV_E.txt"
 # returns list of 255 TV_E vectors
 
-#LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
+# LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
 
-#N: number of inputs to the circuit
-#seed: initial seed for LFSR
-#batch_low/high: range of test vectors to return
+# N: number of inputs to the circuit
+# seed: initial seed for LFSR
+# batch_low/high: range of test vectors to return
 
 def TV_E(N, seed):
     state_prev = []
-    state = [] #store N states here, temporarily
-    TV_E = []   #store final TV sequence here, permanently
-    seed = int(seed)   #cast input to int
-    #construct LFSR:
+    state = []  # store N states here, temporarily
+    TV_E = []  # store final TV sequence here, permanently
+    seed = int(seed)  # cast input to int
+    # construct LFSR:
 
     s0 = bin(seed)
-    s0 = s0.replace("0b", "")   #remove "b0"
+    s0 = s0.replace("0b", "")  # remove "b0"
 
     while (len(s0) < 8):
-        s0 = ''.join(('0',s0))   #append with zeros if necessary to get to 8 bits
+        s0 = ''.join(('0', s0))  # append with zeros if necessary to get to 8 bits
 
-    #populate initial seed in state machine
+    # populate initial seed in state machine
     for i in range(8):
         state_prev.append(int(s0[i]))
         state.append(int(s0[i]))
     TV_E.append(s0)
 
+    # perform LFSR for test vectors with multi-seed behavior
 
-
-    #perform LFSR for test vectors with multi-seed behavior
-
-    for i in range(2*255):    #do for range 2*255 circuit inputs so we don't run out of space
+    for i in range(2 * 255):  # do for range 2*255 circuit inputs so we don't run out of space
         stateStr = ""
         for j in range(8):
             if j == 0:
                 state[j] = state_prev[7]
-            #XOR operation between two last D-FF
+            # XOR operation between two last D-FF
             if j == 6:
-                state[j] = str(int(state_prev[j-1])^int(state_prev[j+1]))
+                state[j] = str(int(state_prev[j - 1]) ^ int(state_prev[j + 1]))
             else:
-                state[j] = state_prev[j-1]
+                state[j] = state_prev[j - 1]
 
             stateStr += str(state[j])
         state_prev = state.copy()
         TV_E.append(stateStr)
 
-
-
-    
-    #now, concatentate TV_E with its subsequent results to get the multi-seed behavior:
-    TV_E_multiSeed = [] #store here
-    idx = 0 #keeping track of which seed to shift over
+    # now, concatentate TV_E with its subsequent results to get the multi-seed behavior:
+    TV_E_multiSeed = []  # store here
+    idx = 0  # keeping track of which seed to shift over
     seedStr = ""
     joinIdx = 1
-    for i in range (255):
+    for i in range(255):
         TV_E_multiSeed.append(str(TV_E[i]))
         seedStr = str(TV_E_multiSeed[i])
         while len(TV_E_multiSeed[i]) < N:
-            TV_E_multiSeed[i] = TV_E[joinIdx+1] + TV_E_multiSeed[i]
-            joinIdx+=1
+            TV_E_multiSeed[i] = TV_E[joinIdx + 1] + TV_E_multiSeed[i]
+            joinIdx += 1
         joinIdx = 1
-            
+
         seedStr = ""
 
-       
-    #chop TV to reach N inputs:
+    # chop TV to reach N inputs:
     for i in range(255):
         while len(TV_E_multiSeed[i]) != N:
             TV_E_multiSeed[i] = TV_E_multiSeed[i][1:]
-    
-    #write to txt file
-    outputFile  = open("TV_E.txt", "w") 
+
+    # write to txt file
+    outputFile = open("TV_E.txt", "w")
     outStr = ""
     for i in range(255):
         outStr = TV_E_multiSeed[i]
@@ -95,16 +90,17 @@ def TV_E(N, seed):
 
     outputFile.close()
 
+    return TV_E_multiSeed
 
-    return TV_E_multiSeed  
+
 def TV_C(N, seed):
-    outputFile  = open("TV_C.txt", "w") 
+    outputFile = open("TV_C.txt", "w")
     TV_C = []
     x = 0
 
     for i in range(0, 255):
         bits = ''
-        for j in range(0, -(-N//8)):
+        for j in range(0, -(-N // 8)):
             s0 = bin(int(seed) + i)
             i = i + 1
             s0 = s0[2:].rjust(8, '0')
@@ -115,123 +111,127 @@ def TV_C(N, seed):
         x = x + 1
     outputFile.close()
     return TV_C
-#LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
-#returns: list of 255 test vectors of length N
-#N: inputs to circuit
-# seed: inital seed for the LFSR 
+
+
+# LFSR is a sequence of N D-FF, with an XOR at the Nth D-FF
+# returns: list of 255 test vectors of length N
+# N: inputs to circuit
+# seed: inital seed for the LFSR
 def TV_D(N, seed):
     state_prev = []
-    state = [] #store N states here, temporarily
-    TV_D = []   #store final TV sequence here, permanently
+    state = []  # store N states here, temporarily
+    TV_D = []  # store final TV sequence here, permanently
 
-    #construct LFSR:
+    # construct LFSR:
 
     s0 = bin(seed)
-    s0 = s0.replace("0b", "")   #remove "b0"
-    
-    while (len(s0) < 8):
-        s0 = ''.join(('0',s0))   #prepend with zeros to get to 8 bit length
+    s0 = s0.replace("0b", "")  # remove "b0"
 
-    for i in range (8):
-        state_prev.append(s0[i])    #get initial seed value
+    while (len(s0) < 8):
+        s0 = ''.join(('0', s0))  # prepend with zeros to get to 8 bit length
+
+    for i in range(8):
+        state_prev.append(s0[i])  # get initial seed value
 
     state = state_prev.copy()
     TV = ""
 
     while len(s0) < N:
-            s0 = ''.join((s0,s0))
+        s0 = ''.join((s0, s0))
     while len(s0) != N:
-        s0=s0[1:]
+        s0 = s0[1:]
     TV_D.append(s0)
 
-    #LFSR with XOR between two last D-FF
-    for i in range (254):
+    # LFSR with XOR between two last D-FF
+    for i in range(254):
         for j in range(8):
             if j == 0:
-               
                 state[j] = state_prev[7]
             if j == 6:
-                state[j] = str(int(state_prev[j+1])^int(state_prev[j-1]))
+                state[j] = str(int(state_prev[j + 1]) ^ int(state_prev[j - 1]))
             else:
-                state[j] = state_prev[j-1]
-            TV+=str(state[j])
+                state[j] = state_prev[j - 1]
+            TV += str(state[j])
         state_prev = state.copy()
 
         while len(TV) < N:
-            TV = ''.join((TV,TV))
+            TV = ''.join((TV, TV))
         while len(TV) != N:
-            TV=TV[1:]
+            TV = TV[1:]
         TV_D.append(TV)
         TV = ""
 
-    #write to txt file
-    outputFile  = open("TV_D.txt", "w") 
+    # write to txt file
+    outputFile = open("TV_D.txt", "w")
     outStr = ""
     for i in range(255):
         outStr = TV_D[i]
         outputFile.write(outStr + "\n")
 
     outputFile.close()
-         
-    return TV_D
-def TV_A(N, seed):
-    TV_A = []   #store TV to list
 
-        
-    for i in range(seed, 255): 
-        TV = bin(i)     #convert int to binary string
-        TV = TV.replace("0b", "")   #eliminate "0b"
-        
+    return TV_D
+
+
+def TV_A(N, seed):
+    TV_A = []  # store TV to list
+
+    for i in range(seed, 255):
+        TV = bin(i)  # convert int to binary string
+        TV = TV.replace("0b", "")  # eliminate "0b"
+
         while (len(TV) < N):
-            TV = ''.join(('0',TV))   #pad zeros to get length 
-        
+            TV = ''.join(('0', TV))  # pad zeros to get length
+
         TV_A.append(TV)
-    
+
     if seed != 0:
         for i in range(seed):
-            TV = bin(i)     #convert int to binary string
-            TV = TV.replace("0b", "")   #eliminate "0b"
-        
+            TV = bin(i)  # convert int to binary string
+            TV = TV.replace("0b", "")  # eliminate "0b"
+
             while (len(TV) < N):
-                TV = ''.join(('0',TV))   #pad zeros to get length 
-        
+                TV = ''.join(('0', TV))  # pad zeros to get length
+
             TV_A.append(TV)
-    
-    #write to txt file
-    outputFile  = open("TV_A.txt", "w") 
+
+    # write to txt file
+    outputFile = open("TV_A.txt", "w")
     outStr = ""
 
     for i in range(255):
-        outStr = TV_A[i][0:N]   #cut off N bits to ensure proper size
+        outStr = TV_A[i][0:N]  # cut off N bits to ensure proper size
         outputFile.write(outStr + "\n")
 
     outputFile.close()
 
-
     return TV_A
+
+
 def TV_B(N, seed):
-    outputFile  = open("TV_B.txt", "w") 
+    outputFile = open("TV_B.txt", "w")
     TV_B = []
     s0 = bin(int(seed))
 
     for i in range(0, 255):
         bits = ''
-        for j in range(0, -(-N//8)):
+        for j in range(0, -(-N // 8)):
             bits = s0[2:].rjust(8, '0') + bits
         cutoff = abs(len(bits) - N)
-        TV_B.insert(i,bits[cutoff:])
-        s0 = bin(int(s0,2) + 1)
+        TV_B.insert(i, bits[cutoff:])
+        s0 = bin(int(s0, 2) + 1)
         outputFile.write(TV_B[i] + '\n')
     outputFile.close()
     return TV_B
+
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: Reading in the Circuit gate-level netlist file: this function takes as input the benchmark file and returns as output
 #           the circuit dictionary that will be using throughout the code
 
 def netRead(netName):
-    global inputCount #reference global counter
-    
+    global inputCount  # reference global counter
+
     # Opening the netlist file:
     netFile = open(netName, "r")
 
@@ -271,7 +271,7 @@ def netRead(netName):
             line = line.replace("INPUT", "")
             line = line.replace("(", "")
             line = line.replace(")", "")
-            inputCount += 1 #global input line counter
+            inputCount += 1  # global input line counter
 
             # Format the variable name to wire_*VAR_NAME*
             line = "wire_" + line
@@ -337,6 +337,8 @@ def netRead(netName):
     circuit["GATES"] = ["Gate list", gates]
 
     return circuit
+
+
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: calculates the output value for each logic gate. Takes as inputs the name of the gate to analyze and the
 #           circuit dictionary updated by the inputRead function (i.e. with inputs values)
@@ -492,6 +494,8 @@ def gateCalc(circuit, node):
 
     # Error detection... should not be able to get at this point
     return circuit[node][0]
+
+
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: Updating the circuit dictionary with the input lines
 def inputRead(circuit, line):
@@ -508,16 +512,18 @@ def inputRead(circuit, line):
     inputs = list(circuit["INPUTS"][1])
     # dictionary item: [(bool) If accessed, (int) the value of each line, (int) layer number, (str) origin of U value]
     for bitVal in line:
-        bitVal = bitVal.upper() # in the case user input lower-case u
-        circuit[inputs[i]][3] = bitVal # put the bit value as the line value
+        bitVal = bitVal.upper()  # in the case user input lower-case u
+        circuit[inputs[i]][3] = bitVal  # put the bit value as the line value
         circuit[inputs[i]][2] = True  # and make it so that this line is accessed
 
         # In case the input has an invalid character (i.e. not "0", "1" or "U"), return an error flag
-    #    if bitVal != "0" and bitVal != "1" and bitVal != "U":
-    #        return -2
-        i -= 1 # continuing the increments
+        #    if bitVal != "0" and bitVal != "1" and bitVal != "U":
+        #        return -2
+        i -= 1  # continuing the increments
 
     return circuit
+
+
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: the circuit simulator: takes the circuit updated with input lines and returns the circuit with all the
 #           lines updated, calling the gateCald for each gate
@@ -531,7 +537,7 @@ def basic_sim(circuit):
 
         # Remove the first element of the queue and assign it to a variable for us to use
         curr = queue[0]
-        #queue.remove(curr)
+        queue.remove(curr)
 
         # initialize a flag, used to check if every terminal has been accessed
         term_has_value = True
@@ -557,11 +563,12 @@ def basic_sim(circuit):
             queue.append(curr)
 
     return circuit
+
+
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: fault_det takes the fault under exam and the circuit dictionary just updated with the inputs current values
 #           it returns the final circuit dictionary, where all the wires are updated considering the fault
-def fault_det(circuit,fault):
-
+def fault_det(circuit, fault):
     # splitting the fault line at each '-' to get all the fault parameters in a list
     faultSpliced = fault.split("-")
 
@@ -603,21 +610,20 @@ def fault_det(circuit,fault):
         # - compute the gate output calling the gateCalc if that line is one of the gate inputs
 
         if (curr == node):
-            if (faultSpliced[1] == "SA"):      # if the second element of faultSpliced is "SA", then the fault is
-                                               # at the gate output (input signals already analyzed)
+            if (faultSpliced[1] == "SA"):  # if the second element of faultSpliced is "SA", then the fault is
+                # at the gate output (input signals already analyzed)
                 circuit[node][3] = fault[-1]
                 circuit[node][2] = True
                 continue
 
-            if (faultSpliced[1] == "IN"):      # if the second element of faultSpliced is "IN", then the fault is
-                                               # at one of the gate inputs
+            if (faultSpliced[1] == "IN"):  # if the second element of faultSpliced is "IN", then the fault is
+                # at one of the gate inputs
 
                 line = "wire_" + faultSpliced[2]
                 save = copy.deepcopy(circuit[line][3])  # save a copy of the value of the line we are going to modify
                 circuit[line][3] = fault[-1]
-                modified = True           # update the modified flag so that at the next iteration we'll restore
-                                          # the modified line
-
+                modified = True  # update the modified flag so that at the next iteration we'll restore
+                # the modified line
 
         # initialize a flag, used to check if every terminal has been accessed
         term_has_value = True
@@ -636,22 +642,19 @@ def fault_det(circuit,fault):
         else:
             queue.append(curr)
 
-
     return circuit
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # FUNCTION: Main Function
 def main():
-
     # Used for file access
     script_dir = os.path.dirname(__file__)
 
     # Select circuit benchmark file
     while True:
         print("\n Read circuit benchmark file:")
-        # userInput = input()
-        userInput = "circuit.bench"
+        userInput = input()
         cktFile = os.path.join(script_dir, userInput)
         if not os.path.isfile(cktFile):
             print("File does not exist. \n")
@@ -661,19 +664,15 @@ def main():
     # Select fault list file
     while True:
         print("\n Read fault list file:")
-        # userInput = input()
-        userInput = "faultList.txt"
+        userInput = input()
         fltFile = os.path.join(script_dir, userInput)
         if not os.path.isfile(fltFile):
             print("File does not exist. \n")
         else:
             break
 
-  
-    
     # Select the output file
     while True:
-        print("\n Write output file:")
         userInput = "output.txt"
         outputName = os.path.join(script_dir, userInput)
         if userInput == "":
@@ -685,25 +684,25 @@ def main():
     circuit = netRead(cktFile)
 
     print("Please enter a seed: ")
-    seed = 255
+    seed = input()
     seed = int(seed)
-    
+
     print("Please enter a batch size in [1,10]: ")
-    batch = 3
+    batch = input()
     batch = int(batch)
-    
+
     TV_A_list = TV_A(inputCount, seed)
     TV_B_list = TV_B(inputCount, seed)
     TV_C_list = TV_C(inputCount, seed)
     TV_D_list = TV_D(inputCount, seed)
     TV_E_list = TV_E(inputCount, seed)
 
-    #cut list to batch size needed:
-    TV_A_list = TV_A_list [:batch*25]
-    TV_B_list = TV_B_list [:batch*25]
-    TV_C_list = TV_C_list [:batch*25]
-    TV_D_list = TV_D_list [:batch*25]
-    TV_E_list = TV_E_list [:batch*25]
+    # cut list to batch size needed:
+    TV_A_list = TV_A_list[:batch * 25]
+    TV_B_list = TV_B_list[:batch * 25]
+    TV_C_list = TV_C_list[:batch * 25]
+    TV_D_list = TV_D_list[:batch * 25]
+    TV_E_list = TV_E_list[:batch * 25]
 
     testLength = len(TV_A_list) + len(TV_B_list) + len(TV_C_list) + len(TV_D_list) + len(TV_E_list)
 
@@ -713,11 +712,10 @@ def main():
     hitRate = []
     detectRate = 0
 
-    #calculating for TV_A
-    j = 0   #index of which TV list we are using
+    j = 0  # index of which TV list we are using
     A_detectionRate = []
-    A_detectionRate.append(0)   #append a zero at the beginning, because we need something to add to our first term
-    detect = 0  #counter for number of detections for each batch
+    A_detectionRate.append(0)  # append a zero at the beginning, because we need something to add to our first term
+    detect = 0  # counter for number of detections for each batch
     inputName = output_list[j]
 
     faultFile = open(fltFile, "r")
@@ -725,7 +723,7 @@ def main():
     # initialize the fault list
     fault_list = []
 
-    #read in fault list
+    # read in fault list
     for fault in faultFile:
 
         # Do nothing else if empty lines, ...
@@ -741,63 +739,522 @@ def main():
 
         # Append each fault in the fault file to the fault list
         fault_list.append(fault)
-    
-    #save this number because we will remove elements from the fault list later
-    totalFaults = len(fault_list) 
 
-    #loop through the fault list and do a simulation for each test vector
+    # save this number because we will remove elements from the fault list later
+    totalFaults = len(fault_list)
+
+    # loop through the fault list and do a simulation for each test vector
     for i in range(len(TV_A_list)):
-         
-        tvFile = open(inputName, "r") 
+
+        tvFile = open(inputName, "r")
         outFile = open(outputName, "w")
 
         # temporary empty list of detected and undetected faults
         detect_list = []
         undetect_list = []
 
-        #vectors must be reversed in order 
+        # vectors must be reversed in order
         tv_rev = vector_list[j][i][::-1]
 
         # at each new test vector, reset the circuit
         circuit = inputRead(circuit, tv_rev)
 
         # save a copy of the circuit with updated inputs and call the good circuit simulator to get the good circuit
-        good_circuit=copy.deepcopy(circuit)
-        #good_circuit = basic_sim(good_circuit)
+        good_circuit = copy.deepcopy(circuit)
+        good_circuit = basic_sim(good_circuit)
 
         # Saving the outputs resulting from the good circuit
-        good_out=list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
-
+        good_out = list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
 
         # Append to the undetected list each fault of the fault list that has not been appended to the detected list
         for term in fault_list:
             # Save a copy of the circuit with updated inputs and call the bad circuit simulator to get the bad circuit
-            bad_circuit = copy.deepcopy(circuit)
-            bad_circuit = fault_det(bad_circuit,fault)
+            # bad_circuit = copy.deepcopy(circuit)
+            blank = []
+
+            bad_circuit = dict(blank)
+            bad_circuit.update(circuit)
+
+            bad_circuit = fault_det(bad_circuit, fault)
 
             # Saving the outputs resulting from the bad circuit
-            bad_out=list(bad_circuit[out][3] for out in bad_circuit["OUTPUTS"][1])
+            bad_out = list(bad_circuit[out][3] for out in bad_circuit["OUTPUTS"][1])
 
             # Compare good and bad outputs: if they are different -> show detection and append fault to detected list
-            if good_out!= bad_out:
-                if not ( fault  in detect_list ):
+            if good_out != bad_out:
+                if not (fault in detect_list):
                     detect_list.append(fault)
-                    detect +=1  #increment detection counter
+                    fault_list.remove(
+                        term)  # remove the detected fault from the list - we want to save time in our next loop
+                    detect += 1  # increment detection counter
 
-            if not(term in detect_list):
+            if not (term in detect_list):
                 undetect_list.append(term)
-            
-        #at this point we have looped through the fault list; save the batch calculations
-        detectRate = detect/totalFaults*100
-        
+
+        # at this point we have looped through the fault list; save the batch calculations
+        detectRate = detect / totalFaults * 100
+        detect = 0
         A_detectionRate.append(detectRate + A_detectionRate[-1])
 
-        #reached end of the loop, go back up to finish for all 25 test vectors in this method
+        # reached end of the loop, go back up to finish for all 25 test vectors in this method
 
-    #remove the initial zero we appended        
+    # remove the initial zero we appended
     A_detectionRate.remove(0)
     print("Finished " + inputName + " test vector list, results are as follows: ")
-    print('\n'.join(map(str, A_detectionRate))) 
+    print('\n'.join(map(str, A_detectionRate)))
+    fault_list.clear()
+    faultFile.close()
+
+    # write to txt file
+    outputFile = open("A_results.txt", "w")
+    outStr = ""
+    for i in range(25):
+        outStr = A_detectionRate[i]
+        outputFile.write(str(outStr) + "\n")
+
+    outputFile.close()
+
+    ###########################################################################################
+    # calculating for TV_B
+    ###########################################################################################
+    j += 1  # index of which TV list we are using
+    B_detectionRate = []
+    B_detectionRate.append(0)  # append a zero at the beginning, because we need something to add to our first term
+    detect = 0  # counter for number of detections for each batch
+    inputName = output_list[j]
+
+    faultFile = open(fltFile, "r")
+
+    # initialize the fault list
+    fault_list = []
+
+    # read in fault list
+    for fault in faultFile:
+
+        # Do nothing else if empty lines, ...
+        if (fault == "\n"):
+            continue
+        # ... or any comments
+        if (fault[0] == "#"):
+            continue
+
+        # Removing newlines and spaces
+        fault = fault.replace("\n", "")
+        fault = fault.replace(" ", "")
+
+        # Append each fault in the fault file to the fault list
+        fault_list.append(fault)
+
+    # save this number because we will remove elements from the fault list later
+    totalFaults = len(fault_list)
+
+    # loop through the fault list and do a simulation for each test vector
+    for i in range(len(TV_A_list)):
+
+        tvFile = open(inputName, "r")
+        outFile = open(outputName, "w")
+
+        # temporary empty list of detected and undetected faults
+        detect_list = []
+        undetect_list = []
+
+        # vectors must be reversed in order
+        tv_rev = vector_list[j][i][::-1]
+
+        # at each new test vector, reset the circuit
+        circuit = inputRead(circuit, tv_rev)
+
+        # save a copy of the circuit with updated inputs and call the good circuit simulator to get the good circuit
+        good_circuit = copy.deepcopy(circuit)
+        good_circuit = basic_sim(good_circuit)
+
+        # Saving the outputs resulting from the good circuit
+        good_out = list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
+
+        # Append to the undetected list each fault of the fault list that has not been appended to the detected list
+        for term in fault_list:
+            # Save a copy of the circuit with updated inputs and call the bad circuit simulator to get the bad circuit
+            # bad_circuit = copy.deepcopy(circuit)
+            # bad_circuit = fault_det(bad_circuit,fault)
+
+            blank = []
+
+            bad_circuit = dict(blank)
+            bad_circuit.update(circuit)
+
+            bad_circuit = fault_det(bad_circuit, fault)
+
+            # Saving the outputs resulting from the bad circuit
+            bad_out = list(bad_circuit[out][3] for out in bad_circuit["OUTPUTS"][1])
+
+            # Compare good and bad outputs: if they are different -> show detection and append fault to detected list
+            if good_out != bad_out:
+                if not (fault in detect_list):
+                    detect_list.append(fault)
+                    fault_list.remove(
+                        term)  # remove the detected fault from the list - we want to save time in our next loop
+                    detect += 1  # increment detection counter
+
+            if not (term in detect_list):
+                undetect_list.append(term)
+
+        # at this point we have looped through the fault list; save the batch calculations
+        detectRate = detect / totalFaults * 100
+        detect = 0
+        B_detectionRate.append(detectRate + B_detectionRate[-1])
+
+        # reached end of the loop, go back up to finish for all 25 test vectors in this method
+
+    # remove the initial zero we appended
+    B_detectionRate.remove(0)
+    print("Finished " + inputName + " test vector list, results are as follows: ")
+    print('\n'.join(map(str, B_detectionRate)))
+    fault_list.clear()
+    faultFile.close()
+
+    # write to txt file
+    outputFile = open("B_results.txt", "w")
+    outStr = ""
+    for i in range(25):
+        outStr = B_detectionRate[i]
+        outputFile.write(str(outStr) + "\n")
+
+    outputFile.close()
+
+    ########################################################################################
+    # calculating for TV_C
+    ########################################################################################
+
+    j += 1  # index of which TV list we are using
+    C_detectionRate = []
+    C_detectionRate.append(0)  # append a zero at the beginning, because we need something to add to our first term
+    detect = 0  # counter for number of detections for each batch
+    inputName = output_list[j]
+
+    faultFile = open(fltFile, "r")
+
+    # initialize the fault list
+    fault_list = []
+
+    # read in fault list
+    for fault in faultFile:
+
+        # Do nothing else if empty lines, ...
+        if (fault == "\n"):
+            continue
+        # ... or any comments
+        if (fault[0] == "#"):
+            continue
+
+        # Removing newlines and spaces
+        fault = fault.replace("\n", "")
+        fault = fault.replace(" ", "")
+
+        # Append each fault in the fault file to the fault list
+        fault_list.append(fault)
+
+    # save this number because we will remove elements from the fault list later
+    totalFaults = len(fault_list)
+
+    # loop through the fault list and do a simulation for each test vector
+    for i in range(len(TV_A_list)):
+
+        tvFile = open(inputName, "r")
+        outFile = open(outputName, "w")
+
+        # temporary empty list of detected and undetected faults
+        detect_list = []
+        undetect_list = []
+
+        # vectors must be reversed in order
+        tv_rev = vector_list[j][i][::-1]
+
+        # at each new test vector, reset the circuit
+        circuit = inputRead(circuit, tv_rev)
+
+        # save a copy of the circuit with updated inputs and call the good circuit simulator to get the good circuit
+        good_circuit = copy.deepcopy(circuit)
+        good_circuit = basic_sim(good_circuit)
+
+        # Saving the outputs resulting from the good circuit
+        good_out = list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
+
+        # Append to the undetected list each fault of the fault list that has not been appended to the detected list
+        for term in fault_list:
+            # Save a copy of the circuit with updated inputs and call the bad circuit simulator to get the bad circuit
+            # bad_circuit = copy.deepcopy(circuit)
+            # bad_circuit = fault_det(bad_circuit,fault)
+
+            blank = []
+
+            bad_circuit = dict(blank)
+            bad_circuit.update(circuit)
+
+            bad_circuit = fault_det(bad_circuit, fault)
+
+            # Saving the outputs resulting from the bad circuit
+            bad_out = list(bad_circuit[out][3] for out in bad_circuit["OUTPUTS"][1])
+
+            # Compare good and bad outputs: if they are different -> show detection and append fault to detected list
+            if good_out != bad_out:
+                if not (fault in detect_list):
+                    detect_list.append(fault)
+                    fault_list.remove(
+                        term)  # remove the detected fault from the list - we want to save time in our next loop
+                    detect += 1  # increment detection counter
+
+            if not (term in detect_list):
+                undetect_list.append(term)
+
+        # at this point we have looped through the fault list; save the batch calculations
+        detectRate = detect / totalFaults * 100
+        detect = 0
+        C_detectionRate.append(detectRate + C_detectionRate[-1])
+
+        # reached end of the loop, go back up to finish for all 25 test vectors in this method
+
+    # remove the initial zero we appended
+    C_detectionRate.remove(0)
+    print("Finished " + inputName + " test vector list, results are as follows: ")
+    print('\n'.join(map(str, C_detectionRate)))
+    fault_list.clear()
+    faultFile.close()
+
+    # write to txt file
+    outputFile = open("C_results.txt", "w")
+    outStr = ""
+    for i in range(25):
+        outStr = C_detectionRate[i]
+        outputFile.write(str(outStr) + "\n")
+
+    outputFile.close()
+
+    ######################
+    # calculating for TV_D
+    ######################
+
+    j += 1  # index of which TV list we are using
+    D_detectionRate = []
+    D_detectionRate.append(0)  # append a zero at the beginning, because we need something to add to our first term
+    detect = 0  # counter for number of detections for each batch
+    inputName = output_list[j]
+
+    faultFile = open(fltFile, "r")
+
+    # initialize the fault list
+    fault_list = []
+
+    # read in fault list
+    for fault in faultFile:
+
+        # Do nothing else if empty lines, ...
+        if (fault == "\n"):
+            continue
+        # ... or any comments
+        if (fault[0] == "#"):
+            continue
+
+        # Removing newlines and spaces
+        fault = fault.replace("\n", "")
+        fault = fault.replace(" ", "")
+
+        # Append each fault in the fault file to the fault list
+        fault_list.append(fault)
+
+    # save this number because we will remove elements from the fault list later
+    totalFaults = len(fault_list)
+
+    # loop through the fault list and do a simulation for each test vector
+    for i in range(len(TV_A_list)):
+
+        tvFile = open(inputName, "r")
+        outFile = open(outputName, "w")
+
+        # temporary empty list of detected and undetected faults
+        detect_list = []
+        undetect_list = []
+
+        # vectors must be reversed in order
+        tv_rev = vector_list[j][i][::-1]
+
+        # at each new test vector, reset the circuit
+        circuit = inputRead(circuit, tv_rev)
+
+        # save a copy of the circuit with updated inputs and call the good circuit simulator to get the good circuit
+        good_circuit = copy.deepcopy(circuit)
+        good_circuit = basic_sim(good_circuit)
+
+        # Saving the outputs resulting from the good circuit
+        good_out = list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
+
+        # Append to the undetected list each fault of the fault list that has not been appended to the detected list
+        for term in fault_list:
+            # Save a copy of the circuit with updated inputs and call the bad circuit simulator to get the bad circuit
+            # bad_circuit = copy.deepcopy(circuit)
+            # bad_circuit = fault_det(bad_circuit,fault)
+            blank = []
+
+            bad_circuit = dict(blank)
+            bad_circuit.update(circuit)
+
+            bad_circuit = fault_det(bad_circuit, fault)
+
+            # Saving the outputs resulting from the bad circuit
+            bad_out = list(bad_circuit[out][3] for out in bad_circuit["OUTPUTS"][1])
+
+            # Compare good and bad outputs: if they are different -> show detection and append fault to detected list
+            if good_out != bad_out:
+                if not (fault in detect_list):
+                    detect_list.append(fault)
+                    fault_list.remove(
+                        term)  # remove the detected fault from the list - we want to save time in our next loop
+                    detect += 1  # increment detection counter
+
+            if not (term in detect_list):
+                undetect_list.append(term)
+
+        # at this point we have looped through the fault list; save the batch calculations
+        detectRate = detect / totalFaults * 100
+        detect = 0
+        D_detectionRate.append(detectRate + D_detectionRate[-1])
+
+        # reached end of the loop, go back up to finish for all 25 test vectors in this method
+
+    # remove the initial zero we appended
+    D_detectionRate.remove(0)
+    print("Finished " + inputName + " test vector list, results are as follows: ")
+    print('\n'.join(map(str, D_detectionRate)))
+    fault_list.clear()
+    faultFile.close()
+
+    # write to txt file
+    outputFile = open("D_results.txt", "w")
+    outStr = ""
+    for i in range(25):
+        outStr = D_detectionRate[i]
+        outputFile.write(str(outStr) + "\n")
+
+    outputFile.close()
+
+    ######################
+    # calculating for TV_E
+    ######################
+
+    j += 1  # index of which TV list we are using
+    E_detectionRate = []
+    E_detectionRate.append(0)  # append a zero at the beginning, because we need something to add to our first term
+    detect = 0  # counter for number of detections for each batch
+    inputName = output_list[j]
+
+    faultFile = open(fltFile, "r")
+
+    # initialize the fault list
+    fault_list = []
+
+    # read in fault list
+    for fault in faultFile:
+
+        # Do nothing else if empty lines, ...
+        if (fault == "\n"):
+            continue
+        # ... or any comments
+        if (fault[0] == "#"):
+            continue
+
+        # Removing newlines and spaces
+        fault = fault.replace("\n", "")
+        fault = fault.replace(" ", "")
+
+        # Append each fault in the fault file to the fault list
+        fault_list.append(fault)
+
+    # save this number because we will remove elements from the fault list later
+    totalFaults = len(fault_list)
+
+    # loop through the fault list and do a simulation for each test vector
+    for i in range(len(TV_A_list)):
+
+        tvFile = open(inputName, "r")
+        outFile = open(outputName, "w")
+
+        # temporary empty list of detected and undetected faults
+        detect_list = []
+        undetect_list = []
+
+        # vectors must be reversed in order
+        tv_rev = vector_list[j][i][::-1]
+
+        # at each new test vector, reset the circuit
+        circuit = inputRead(circuit, tv_rev)
+
+        # save a copy of the circuit with updated inputs and call the good circuit simulator to get the good circuit
+        good_circuit = copy.deepcopy(circuit)
+        good_circuit = basic_sim(good_circuit)
+
+        # Saving the outputs resulting from the good circuit
+        good_out = list(good_circuit[out][3] for out in good_circuit["OUTPUTS"][1])
+
+        # Append to the undetected list each fault of the fault list that has not been appended to the detected list
+        for term in fault_list:
+            # Save a copy of the circuit with updated inputs and call the bad circuit simulator to get the bad circuit
+            # bad_circuit = copy.deepcopy(circuit)
+            # bad_circuit = fault_det(bad_circuit,fault)
+            blank = []
+
+            bad_circuit = dict(blank)
+            bad_circuit.update(circuit)
+
+            bad_circuit = fault_det(bad_circuit, fault)
+
+            # Saving the outputs resulting from the bad circuit
+            bad_out = list(bad_circuit[out][3] for out in bad_circuit["OUTPUTS"][1])
+
+            # Compare good and bad outputs: if they are different -> show detection and append fault to detected list
+            if good_out != bad_out:
+                if not (fault in detect_list):
+                    detect_list.append(fault)
+                    fault_list.remove(
+                        term)  # remove the detected fault from the list - we want to save time in our next loop
+                    detect += 1  # increment detection counter
+
+            if not (term in detect_list):
+                undetect_list.append(term)
+
+        # at this point we have looped through the fault list; save the batch calculations
+        detectRate = detect / totalFaults * 100
+        detect = 0
+        E_detectionRate.append(detectRate + E_detectionRate[-1])
+
+        # reached end of the loop, go back up to finish for all 25 test vectors in this method
+
+    # remove the initial zero we appended
+    E_detectionRate.remove(0)
+    print("Finished " + inputName + " test vector list, results are as follows: ")
+    print('\n'.join(map(str, E_detectionRate)))
+    fault_list.clear()
+    faultFile.close()
+
+    # write to txt file
+    outputFile = open("E_results.txt", "w")
+    outStr = ""
+    for i in range(25):
+        outStr = E_detectionRate[i]
+        outputFile.write(str(outStr) + "\n")
+
+    outputFile.close()
+    filenames = ['A_results.txt', 'B_results.txt', 'C_results.txt', 'D_results.txt', 'E_results.txt', ]
+    with open('output.txt', 'w') as writer:
+        readers = [open(filename) for filename in filenames]
+        for lines in zip(*readers):
+            print(', '.join([line.strip() for line in lines]), file=writer)
+    import csv
+    with open('output.txt', 'r') as in_file:
+        stripped = (line.strip() for line in in_file)
+        lines = (line.split(",") for line in stripped if line)
+        with open('output.csv', 'w', newline='') as out_file:
+            writer = csv.writer(out_file)
+            writer.writerow(('TV_A', 'TV_B', 'TV_C', 'TV_D', 'TV_E'))
+            writer.writerows(lines)
 
 if __name__ == "__main__":
     main()
